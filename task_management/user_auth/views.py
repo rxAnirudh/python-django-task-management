@@ -10,6 +10,10 @@ import uuid
 from django.core.files.storage import FileSystemStorage
 import os
 import base64
+from django.core.mail import send_mail
+from django.conf import settings
+from django.core.mail import EmailMessage  
+
 # Create your views here.
 
 @api_view(["POST"])
@@ -36,3 +40,26 @@ def signup(request):
         return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(["POST"])
+def forgotpassword(request):
+    try:
+        data = request.data
+        serializer = ForgotPasswordSerializer(data=data)
+        if serializer.is_valid():
+            email = serializer.data["email"]
+            # user = UserModel.objects.get(email=email)
+            # if not user:
+            #     return Response({"message":"Account does not exists"}, status=status.HTTP_404_NOT_FOUND)
+            otp = uuid.uuid4()
+            # user.token = otp
+            # user.save()
+            mail_subject = 'Activation link has been sent to your email id'  
+            email = EmailMessage(  
+                        mail_subject, str(otp), to=[email]  
+            )  
+            emailSentID = email.send()
+            print(f"SendIT : {emailSentID}")
+            return Response({"message":"reset mail sent"}, status=status.HTTP_200_OK)
+        return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
