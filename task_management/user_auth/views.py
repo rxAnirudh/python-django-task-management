@@ -99,3 +99,19 @@ def signin(request):
         return Response({"success" : False,"message":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+def deleteprofile(request):
+    try:
+        data = request.data
+        serializer = DeleteProfileSerializer(data=data)
+        if serializer.is_valid():
+            user_id = serializer.data["user_id"]
+            if not UserModel.objects.filter(user_id=user_id).first():
+                return Response({"successs" : False,"message":"Account does not exists"}, status=status.HTTP_201_CREATED)
+            UserModel.objects.filter(user_id=user_id).delete()
+            return Response({"success" : True,"message":"Profile deleted successfully"}, status=status.HTTP_200_OK)
+        return Response({"success" : False,"message":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

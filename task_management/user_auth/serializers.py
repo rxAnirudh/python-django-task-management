@@ -28,3 +28,8 @@ class SignInSerializer(serializers.ModelSerializer):
         fields = ['user_id','password']
 
 
+class DeleteProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserModel
+        fields = ['user_id']
+
