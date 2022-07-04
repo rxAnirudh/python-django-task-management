@@ -22,3 +22,9 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
         fields = ['user_id','password']
 
 
+class SignInSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserModel
+        fields = ['user_id','password']
+
+

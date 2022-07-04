@@ -1,4 +1,5 @@
 import profile
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -13,7 +14,7 @@ import base64
 from django.core.mail import send_mail
 from django.conf import settings
 from django.core.mail import EmailMessage  
-
+from django.core.serializers import serialize
 # Create your views here.
 
 @api_view(["POST"])
@@ -29,8 +30,8 @@ def signup(request):
             user_id = serializer.data["user_id"]
             role = serializer.data["role"]
             mobile_number = serializer.data["mobile_number"]
-            if UserModel.objects.filter(mobile_number=mobile_number).first():
-                return Response({"successs" : True,"Data" : serializer.data,"message":"Profile already exists."}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            if UserModel.objects.filter(mobile_number=mobile_number,user_id=user_id).first():
+                return Response({"successs" : False,"Data" : serializer.data,"message":"Profile already exists."}, status=status.HTTP_406_NOT_ACCEPTABLE)
             new_user = UserModel.objects.create(first_name=first_name,
             last_name=last_name,email=email_id,mobile_number=mobile_number,password=password,role=role,user_id=user_id)
             new_user.save()
@@ -82,3 +83,19 @@ def resetpassword(request):
     except Exception as e:
         return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+@api_view(["POST"])
+def signin(request):
+    try:
+        data = request.data
+        serializer = SignInSerializer(data=data)
+        if serializer.is_valid():
+            password = serializer.data["password"]
+            user_id = serializer.data["user_id"]
+            if not UserModel.objects.filter(user_id=user_id,password=password).first():
+                return Response({"successs" : False,"message":"Account does not exists, please register first"}, status=status.HTTP_201_CREATED)
+            userdata=list(UserModel.objects.values().filter(user_id=user_id))
+            return JsonResponse({"successs" : True,"Data" : userdata[0],"message":"User logged in successfully"}, safe=False)
+        return Response({"success" : False,"message":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
