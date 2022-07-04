@@ -115,3 +115,26 @@ def deleteprofile(request):
         return Response({"success" : False,"message":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+def updateprofile(request):
+    try:
+        data = request.data
+        serializer = UserSerializer(data=data)
+        if serializer.is_valid():
+            userdata = UserModel.objects.filter(user_id=serializer.data["user_id"]).first()
+            if not userdata:
+                return Response({"successs" : False,"message":"Profile does not exists."}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            userdata.first_name = serializer.data["first_name"]
+            userdata.last_name = serializer.data["last_name"]
+            userdata.email_id = serializer.data["email"]
+            userdata.password = serializer.data["password"]
+            userdata.user_id = serializer.data["user_id"]
+            userdata.role = serializer.data["role"]
+            userdata.mobile_number = serializer.data["mobile_number"]
+            userdata.save()
+            return Response({"successs" : True,"Data" : serializer.data,"message":"User profile updated successfully"}, status=status.HTTP_201_CREATED)
+        return Response({"success" : False,"message":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
