@@ -63,3 +63,22 @@ def forgotpassword(request):
         return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+@api_view(["POST"])
+def resetpassword(request):
+    try:
+        data = request.data
+        serializer = ResetPasswordSerializer(data=data)
+        if serializer.is_valid():
+         userdata = UserModel.objects.filter(user_id=serializer.data["user_id"]).first()
+         if not userdata:
+            return Response({"success" : False,"message":"Account does not exists"}, status=status.HTTP_404_NOT_FOUND)
+         userdata.password = serializer.data["password"]
+         userdata.save()
+         return Response({"success" : True,"message":"Password changed successfully"}, status=status.HTTP_200_OK)
+        return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

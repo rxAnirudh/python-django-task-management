@@ -15,3 +15,10 @@ class ForgotPasswordSerializer(serializers.ModelSerializer):
         model = UserModel
         fields = ['email']
 
+
+class ResetPasswordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserModel
+        fields = ['user_id','password']
+
+

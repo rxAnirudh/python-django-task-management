@@ -17,4 +17,7 @@ class UserModel(models.Model):
     updated_at = models.DateTimeField(default=datetime.now(), blank=True)
     is_active = models.BooleanField(default=True)
     is_delete = models.BooleanField(default=False)
+
+
+
     
