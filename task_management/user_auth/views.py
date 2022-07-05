@@ -1,21 +1,14 @@
-import profile
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
-from .threads import send_forgot_email_customer
 from .serializers import *
 from .models import UserModel
 import uuid
-from django.core.files.storage import FileSystemStorage
-import os
-import base64
-from django.core.mail import send_mail
-from django.conf import settings
 from django.core.mail import EmailMessage  
-from django.core.serializers import serialize
 # Create your views here.
+
 
 @api_view(["POST"])
 def signup(request):
@@ -26,16 +19,18 @@ def signup(request):
             first_name = serializer.data["first_name"]
             last_name = serializer.data["last_name"]
             email_id = serializer.data["email"]
-            password = serializer.data["password"]
-            user_id = serializer.data["user_id"]
+            password = data["password"]
             role = serializer.data["role"]
             mobile_number = serializer.data["mobile_number"]
-            if UserModel.objects.filter(mobile_number=mobile_number,user_id=user_id).first():
-                return Response({"successs" : False,"Data" : serializer.data,"message":"Profile already exists."}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            user = UserModel.objects.filter(mobile_number=mobile_number).first()
+            if user:
+                userdata=list(UserModel.objects.values().filter(email=email_id))
+                userdata[0].pop("password")
+                return Response({"successs" : False,"data" : userdata[0],"message":"Profile already exists."}, status=status.HTTP_406_NOT_ACCEPTABLE)
             new_user = UserModel.objects.create(first_name=first_name,
-            last_name=last_name,email=email_id,mobile_number=mobile_number,password=password,role=role,user_id=user_id)
+            last_name=last_name,email=email_id,mobile_number=mobile_number,password=password,role=role)
             new_user.save()
-            return Response({"successs" : True,"Data" : serializer.data,"message":"User created successfully"}, status=status.HTTP_201_CREATED)
+            return Response({"successs" : True,"data" : serializer.data,"message":"User created successfully"}, status=status.HTTP_201_CREATED)
         return Response({"success" : False,"message":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -91,11 +86,13 @@ def signin(request):
         serializer = SignInSerializer(data=data)
         if serializer.is_valid():
             password = serializer.data["password"]
-            user_id = serializer.data["user_id"]
-            if not UserModel.objects.filter(user_id=user_id,password=password).first():
+            email = serializer.data["email"]
+            user = UserModel.objects.filter(email=email,password=password).first()
+            if not user:
                 return Response({"successs" : False,"message":"Account does not exists, please register first"}, status=status.HTTP_201_CREATED)
-            userdata=list(UserModel.objects.values().filter(user_id=user_id))
-            return JsonResponse({"successs" : True,"Data" : userdata[0],"message":"User logged in successfully"}, safe=False)
+            userdata=list(UserModel.objects.values().filter(email=email))
+            userdata[0].pop("password")
+            return JsonResponse({"successs" : True,"data" : userdata[0],"message":"User logged in successfully"}, safe=False)
         return Response({"success" : False,"message":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -107,10 +104,10 @@ def deleteprofile(request):
         data = request.data
         serializer = DeleteProfileSerializer(data=data)
         if serializer.is_valid():
-            user_id = serializer.data["user_id"]
-            if not UserModel.objects.filter(user_id=user_id).first():
+            mobile_number = serializer.data["mobile_number"]
+            if not UserModel.objects.filter(mobile_number=mobile_number).first():
                 return Response({"successs" : False,"message":"Account does not exists"}, status=status.HTTP_201_CREATED)
-            UserModel.objects.filter(user_id=user_id).delete()
+            UserModel.objects.filter(mobile_number=mobile_number).delete()
             return Response({"success" : True,"message":"Profile deleted successfully"}, status=status.HTTP_200_OK)
         return Response({"success" : False,"message":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
@@ -130,11 +127,10 @@ def updateprofile(request):
             userdata.last_name = serializer.data["last_name"]
             userdata.email_id = serializer.data["email"]
             userdata.password = serializer.data["password"]
-            userdata.user_id = serializer.data["user_id"]
             userdata.role = serializer.data["role"]
             userdata.mobile_number = serializer.data["mobile_number"]
             userdata.save()
-            return Response({"successs" : True,"Data" : serializer.data,"message":"User profile updated successfully"}, status=status.HTTP_201_CREATED)
+            return Response({"successs" : True,"data" : serializer.data,"message":"User profile updated successfully"}, status=status.HTTP_201_CREATED)
         return Response({"success" : False,"message":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error":str(e), "message":"Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

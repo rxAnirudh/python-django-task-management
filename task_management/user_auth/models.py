@@ -1,6 +1,7 @@
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
-from datetime import datetime    
+from datetime import datetime
+  
 # Create your models here.
 
 class UserModel(models.Model):
@@ -11,7 +12,7 @@ class UserModel(models.Model):
     profile_pic = models.FileField()
     email = models.EmailField()
     mobile_number = PhoneNumberField()
-    password = models.CharField(max_length=40)
+    password = models.CharField(max_length=20)
     role = models.CharField(max_length=40)
     created_at = models.DateTimeField(default=datetime.now(), blank=True)
     updated_at = models.DateTimeField(default=datetime.now(), blank=True)
